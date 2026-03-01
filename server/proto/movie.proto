@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package movie;
+
+service MovieService {
+  rpc CreateMovie (CreateMovieRequest) returns (MovieResponse);
+  rpc GetMovie (GetMovieRequest) returns (MovieResponse);
+  rpc ListMovies (Empty) returns (MovieListResponse);
+}
+
+message Empty {}
+
+message CreateMovieRequest {
+  string title = 1;
+  string description = 2;
+  int32 release_year = 3;
+}
+
+message GetMovieRequest {
+  int32 id = 1;
+}
+
+message MovieResponse {
+  int32 id = 1;
+  string title = 2;
+  string description = 3;
+  int32 release_year = 4;
+  string image = 5;
+  string type = 6;
+  string created_at = 7;
+}
+
+message MovieListResponse {
+  repeated MovieResponse movies = 1;
+}

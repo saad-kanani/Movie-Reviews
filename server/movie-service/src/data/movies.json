@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "title": "The Galactic Quest",
+    "description": "A crew travels across the galaxy to save a dying planet from an ancient evil.",
+    "release_year": 2022,
+    "image": "https://picsum.photos/200/300?random=1",
+    "type": "Action"
+  },
+  {
+    "id": 2,
+    "title": "Love in Paris",
+    "description": "Two strangers meet by chance in Paris and discover a romance neither expected.",
+    "release_year": 2019,
+    "image": "https://picsum.photos/200/300?random=2",
+    "type": "Romance"
+  },
+  {
+    "id": 3,
+    "title": "Cyber Heist",
+    "description": "A group of hackers plans the ultimate digital heist, but betrayal lurks in the shadows.",
+    "release_year": 2021,
+    "image": "https://picsum.photos/200/300?random=3",
+    "type": "Thriller"
+  },
+  {
+    "id": 4,
+    "title": "Haunted Manor",
+    "description": "Teenagers explore a haunted manor, uncovering secrets that should have stayed buried.",
+    "release_year": 2020,
+    "image": "https://picsum.photos/200/300?random=4",
+    "type": "Horror"
+  },
+  {
+    "id": 5,
+    "title": "The Last Samurai",
+    "description": "A retired samurai comes back for one last battle to protect his village.",
+    "release_year": 2018,
+    "image": "https://picsum.photos/200/300?random=5",
+    "type": "Action"
+  },
+  {
+    "id": 6,
+    "title": "Journey to the Deep",
+    "description": "A marine biologist discovers a hidden underwater civilization.",
+    "release_year": 2023,
+    "image": "https://picsum.photos/200/300?random=6",
+    "type": "Adventure"
+  },
+  {
+    "id": 7,
+    "title": "Midnight Chase",
+    "description": "A detective races against time to catch a serial thief terrorizing the city.",
+    "release_year": 2022,
+    "image": "https://picsum.photos/200/300?random=7",
+    "type": "Thriller"
+  },
+  {
+    "id": 8,
+    "title": "Escape from Titan",
+    "description": "Astronauts stranded on Titan must find a way to return to Earth before resources run out.",
+    "release_year": 2024,
+    "image": "https://picsum.photos/200/300?random=8",
+    "type": "Sci-Fi"
+  },
+  {
+    "id": 9,
+    "title": "The Enchanted Forest",
+    "description": "A young girl discovers magical creatures in a forest that is slowly disappearing.",
+    "release_year": 2017,
+    "image": "https://picsum.photos/200/300?random=9",
+    "type": "Fantasy"
+  },
+  {
+    "id": 10,
+    "title": "Robo Revolution",
+    "description": "In a future where AI controls everything, a small group fights to regain humanity's freedom.",
+    "release_year": 2021,
+    "image": "https://picsum.photos/200/300?random=10",
+    "type": "Sci-Fi"
+  }
+]
