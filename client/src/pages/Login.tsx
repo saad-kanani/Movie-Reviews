@@ -1,14 +1,13 @@
+import React from "react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { UserPlus } from "lucide-react";
+import { User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-// import { supabase } from '../services/supabase';
 
-export default function Register() {
+const Login = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
   });
@@ -30,15 +29,15 @@ export default function Register() {
     setError("");
 
     try {
-      await register(formData);
+      await login(formData);
 
       setSuccess(true);
       setTimeout(() => {
         navigate("/movies");
       }, 1500);
     } catch (err) {
-      setError("Failed to register. Please try again.");
-      console.error("Registration error:", err);
+      setError("Failed to login. Please try again.");
+      console.error("Login error:", err);
     } finally {
       setLoading(false);
     }
@@ -49,12 +48,10 @@ export default function Register() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600 rounded-full mb-4">
-            <UserPlus size={32} className="text-white" />
+            <User size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">
-            Join MovieReview to start rating movies
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">Login</h1>
+          <p className="text-gray-400">Sign in to your MovieReview account</p>
         </div>
 
         <div className="bg-gray-900 rounded-lg p-8 border border-gray-800">
@@ -66,30 +63,11 @@ export default function Register() {
 
           {success && (
             <div className="mb-6 p-4 bg-green-900/50 border border-green-600 rounded-lg text-green-300 text-sm">
-              Registration successful! Redirecting...
+              Login successful! Redirecting...
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-300 mb-2"
-              >
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                placeholder="Enter your name"
-              />
-            </div>
-
             <div>
               <label
                 htmlFor="email"
@@ -133,14 +111,19 @@ export default function Register() {
               disabled={loading || success}
               className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating Account..." : "Register"}
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
           <p className="text-center text-gray-400 mt-4">
-            Already have an account? <Link to="/login" className="text-red-500 hover:text-red-400">Login here</Link>
+            Don't have an account?{" "}
+            <Link to="/register" className="text-red-500 hover:text-red-400">
+              Register here
+            </Link>
           </p>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

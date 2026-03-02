@@ -58,6 +58,26 @@ const createUser = (call, callback) => {
   });
 };
 
+// Login User
+const loginUser = (call, callback) => {
+  const { email, password } = call.request;
+  const user = users.find((u) => u.email === email && u.password === password);
+
+  if (!user) {
+    return callback({
+      code: grpc.status.UNAUTHENTICATED,
+      message: "Invalid email or password",
+    });
+  }
+
+  callback(null, {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    created_at: user.created_at,
+  });
+};
+
 // Get User by ID
 const getUser = (call, callback) => {
   const { id } = call.request;
@@ -96,8 +116,10 @@ const listUsers = (call, callback) => {
 const startServer = () => {
   const server = new grpc.Server();
 
+
   server.addService(userProto.UserService.service, {
     CreateUser: createUser,
+    LoginUser: loginUser,
     GetUser: getUser,
     ListUsers: listUsers,
   });
@@ -114,7 +136,7 @@ const startServer = () => {
       }
       console.log(`🚀 User Service running on port ${port}`);
       server.start();
-    }
+    },
   );
 };
 
