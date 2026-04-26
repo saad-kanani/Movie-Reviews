@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Film } from 'lucide-react';
-import { supabase } from '../services/supabase';
 import { Movie } from '../types';
 import MovieCard from '../components/MovieCard';
 import Loading from '../components/Loading';
+import api from '../services/api';
 
 export default function Movies() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -16,12 +16,7 @@ export default function Movies() {
 
   const fetchMovies = async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('movies')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (fetchError) throw fetchError;
+      const { data } = await api.get<Movie[]>('/movies');      
       setMovies(data || []);
     } catch (err) {
       setError('Failed to load movies. Please try again later.');

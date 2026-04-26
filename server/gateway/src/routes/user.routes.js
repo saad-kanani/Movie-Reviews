@@ -10,6 +10,14 @@ router.post("/", (req, res) => {
   });
 });
 
+// Login user
+router.post("/login", (req, res) => {
+  userClient.LoginUser(req.body, (err, response) => {
+    if (err) return res.status(400).json(err);
+    res.json(response);
+  });
+});
+
 // Get user
 router.get("/:id", (req, res) => {
   userClient.GetUser({ id: parseInt(req.params.id) }, (err, response) => {

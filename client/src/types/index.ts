@@ -2,16 +2,18 @@ export interface Movie {
   id: number;
   title: string;
   description: string;
-  releaseYear: number;
+  release_year: number;
+  type: string;
+  image: string;
 }
 
 export interface Review {
   id: number;
-  movieId: number;
-  userId: number;
+  movie_id: number;
+  user_id: number;
   rating: number;
   comment: string;
-  createdAt?: string;
+  created_at?: string;
 }
 
 export interface User {

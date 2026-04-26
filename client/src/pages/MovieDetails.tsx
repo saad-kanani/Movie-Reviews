@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, ArrowLeft, Star } from 'lucide-react';
-import { supabase } from '../services/supabase';
+// import { supabase } from '../services/supabase';
 import { Movie, Review } from '../types';
 import ReviewCard from '../components/ReviewCard';
 import StarRating from '../components/StarRating';
 import Loading from '../components/Loading';
+import api from '../services/api';
 
 export default function MovieDetails() {
   const { id } = useParams<{ id: string }>();
@@ -28,24 +29,11 @@ export default function MovieDetails() {
 
   const fetchMovieData = async () => {
     try {
-      const [movieResult, reviewsResult] = await Promise.all([
-        supabase
-          .from('movies')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle(),
-        supabase
-          .from('reviews')
-          .select('*')
-          .eq('movie_id', id)
-          .order('created_at', { ascending: false }),
-      ]);
+      const movieResponse = await api.get<Movie>(`/movies/${id}`);
+      const reviewsResponse = await api.get<Review[]>(`/reviews/movie/${id}`);
 
-      if (movieResult.error) throw movieResult.error;
-      if (reviewsResult.error) throw reviewsResult.error;
-
-      setMovie(movieResult.data);
-      setReviews(reviewsResult.data || []);
+      setMovie(movieResponse.data);
+      setReviews(reviewsResponse.data || []);
     } catch (err) {
       setError('Failed to load movie details. Please try again later.');
       console.error('Error fetching movie data:', err);
@@ -93,16 +81,12 @@ export default function MovieDetails() {
     setSubmitError('');
 
     try {
-      const { error } = await supabase
-        .from('reviews')
-        .insert({
-          movie_id: Number(id),
-          user_id: userId,
-          rating: reviewForm.rating,
-          comment: reviewForm.comment,
-        });
-
-      if (error) throw error;
+      await api.post(`/reviews`, {
+        user_id: userId,
+        movie_id: Number(id),
+        rating: reviewForm.rating,
+        comment: reviewForm.comment,
+      });
 
       setSubmitSuccess(true);
       setReviewForm({ rating: 0, comment: '' });
@@ -166,7 +150,7 @@ export default function MovieDetails() {
             <div className="flex items-center space-x-6 mb-6">
               <div className="flex items-center text-gray-400">
                 <Calendar size={20} className="mr-2" />
-                <span>{movie.releaseYear}</span>
+                <span>{movie.release_year}</span>
               </div>
 
               {reviews.length > 0 && (
