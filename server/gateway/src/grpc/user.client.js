@@ -12,10 +12,11 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
 });
 
 const userProto = grpc.loadPackageDefinition(packageDef).user;
+const userServiceAddress = process.env.USER_SERVICE_ADDR || "localhost:5001";
 
 const userClient = new userProto.UserService(
-  "localhost:5001",
-  grpc.credentials.createInsecure()
+  userServiceAddress,
+  grpc.credentials.createInsecure(),
 );
 
 module.exports = userClient;

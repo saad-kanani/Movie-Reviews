@@ -12,10 +12,12 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
 });
 
 const reviewProto = grpc.loadPackageDefinition(packageDef).review;
+const reviewServiceAddress =
+  process.env.REVIEW_SERVICE_ADDR || "localhost:5003";
 
 const reviewClient = new reviewProto.ReviewService(
-  "localhost:5003",
-  grpc.credentials.createInsecure()
+  reviewServiceAddress,
+  grpc.credentials.createInsecure(),
 );
 
 module.exports = reviewClient;

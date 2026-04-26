@@ -1,6 +1,7 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
 const path = require("path");
+const { pool, waitForDatabase, ensureSchema } = require("../db");
 
 // ===== Load Review Proto =====
 const REVIEW_PROTO_PATH = path.join(__dirname, "../../../proto/review.proto");
@@ -34,21 +35,28 @@ const moviePackageDef = protoLoader.loadSync(MOVIE_PROTO_PATH, {
 const reviewProto = grpc.loadPackageDefinition(reviewPackageDef).review;
 const userProto = grpc.loadPackageDefinition(userPackageDef).user;
 const movieProto = grpc.loadPackageDefinition(moviePackageDef).movie;
+const userServiceAddress = process.env.USER_SERVICE_ADDR || "localhost:5001";
+const movieServiceAddress = process.env.MOVIE_SERVICE_ADDR || "localhost:5002";
 
 // ===== gRPC Clients to Other Services =====
 const userClient = new userProto.UserService(
-  "localhost:5001",
-  grpc.credentials.createInsecure()
+  userServiceAddress,
+  grpc.credentials.createInsecure(),
 );
 
 const movieClient = new movieProto.MovieService(
-  "localhost:5002",
-  grpc.credentials.createInsecure()
+  movieServiceAddress,
+  grpc.credentials.createInsecure(),
 );
 
-// ===== Fake Database =====
-let reviews = [];
-let currentId = 1;
+const toReviewResponse = (row) => ({
+  id: row.id,
+  user_id: row.user_id,
+  movie_id: row.movie_id,
+  rating: row.rating,
+  comment: row.comment,
+  created_at: new Date(row.created_at).toISOString(),
+});
 
 // ===== gRPC Methods =====
 
@@ -81,47 +89,69 @@ const addReview = (call, callback) => {
         });
       }
 
-      // 3️⃣ Create Review
-      const newReview = {
-        id: currentId++,
-        user_id,
-        movie_id,
-        rating,
-        comment,
-        created_at: new Date().toISOString(),
-      };
-
-      reviews.push(newReview);
-
-      callback(null, newReview);
+      pool
+        .query(
+          "INSERT INTO reviews (user_id, movie_id, rating, comment) VALUES (?, ?, ?, ?)",
+          [user_id, movie_id, rating, comment],
+        )
+        .then(([result]) =>
+          pool.query(
+            "SELECT id, user_id, movie_id, rating, comment, created_at FROM reviews WHERE id = ?",
+            [result.insertId],
+          ),
+        )
+        .then(([rows]) => callback(null, toReviewResponse(rows[0])))
+        .catch(() =>
+          callback({
+            code: grpc.status.INTERNAL,
+            message: "Failed to create review",
+          }),
+        );
     });
   });
 };
 
 // Get Reviews By Movie
-const getReviewsByMovie = (call, callback) => {
+const getReviewsByMovie = async (call, callback) => {
   const { movie_id } = call.request;
 
-  const movieReviews = reviews.filter(
-    (review) => review.movie_id === movie_id
-  );
-
-  callback(null, { reviews: movieReviews });
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, user_id, movie_id, rating, comment, created_at FROM reviews WHERE movie_id = ? ORDER BY id DESC",
+      [movie_id],
+    );
+    callback(null, { reviews: rows.map(toReviewResponse) });
+  } catch (error) {
+    callback({
+      code: grpc.status.INTERNAL,
+      message: "Failed to fetch reviews",
+    });
+  }
 };
 
 // Get Reviews By User
-const getReviewsByUser = (call, callback) => {
+const getReviewsByUser = async (call, callback) => {
   const { user_id } = call.request;
 
-  const userReviews = reviews.filter(
-    (review) => review.user_id === user_id
-  );
-
-  callback(null, { reviews: userReviews });
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, user_id, movie_id, rating, comment, created_at FROM reviews WHERE user_id = ? ORDER BY id DESC",
+      [user_id],
+    );
+    callback(null, { reviews: rows.map(toReviewResponse) });
+  } catch (error) {
+    callback({
+      code: grpc.status.INTERNAL,
+      message: "Failed to fetch reviews",
+    });
+  }
 };
 
 // ===== Start Server =====
-const startServer = () => {
+const startServer = async () => {
+  await waitForDatabase();
+  await ensureSchema();
+
   const server = new grpc.Server();
 
   server.addService(reviewProto.ReviewService.service, {
@@ -130,10 +160,10 @@ const startServer = () => {
     GetReviewsByUser: getReviewsByUser,
   });
 
-  const PORT = "0.0.0.0:5003";
+  const PORT = process.env.PORT || 5003;
 
   server.bindAsync(
-    PORT,
+    `0.0.0.0:${PORT}`,
     grpc.ServerCredentials.createInsecure(),
     (err, port) => {
       if (err) {
@@ -143,7 +173,7 @@ const startServer = () => {
 
       console.log(`⭐ Review Service running on port ${port}`);
       server.start();
-    }
+    },
   );
 };
 

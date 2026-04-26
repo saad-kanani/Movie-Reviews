@@ -12,10 +12,11 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
 });
 
 const movieProto = grpc.loadPackageDefinition(packageDef).movie;
+const movieServiceAddress = process.env.MOVIE_SERVICE_ADDR || "localhost:5002";
 
 const movieClient = new movieProto.MovieService(
-  "localhost:5002",
-  grpc.credentials.createInsecure()
+  movieServiceAddress,
+  grpc.credentials.createInsecure(),
 );
 
 module.exports = movieClient;

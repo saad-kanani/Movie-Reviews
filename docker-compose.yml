@@ -1,0 +1,107 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: movie-review-db
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: movie_review_db
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-1234}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  user-service:
+    build:
+      context: ./server/user-service
+      dockerfile: Dockerfile
+    container_name: movie-review-user-service
+    environment:
+      PORT: 5001
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER:-root}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-1234}
+      DB_NAME: ${MYSQL_DATABASE:-movie_review_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+
+  movie-service:
+    build:
+      context: ./server/movie-service
+      dockerfile: Dockerfile
+    container_name: movie-review-movie-service
+    environment:
+      PORT: 5002
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER:-root}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-1234}
+      DB_NAME: ${MYSQL_DATABASE:-movie_review_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5002:5002"
+
+  review-service:
+    build:
+      context: ./server/review-service
+      dockerfile: Dockerfile
+    container_name: movie-review-review-service
+    environment:
+      PORT: 5003
+      USER_SERVICE_ADDR: user-service:5001
+      MOVIE_SERVICE_ADDR: movie-service:5002
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER:-root}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-1234}
+      DB_NAME: ${MYSQL_DATABASE:-movie_review_db}
+    depends_on:
+      db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      movie-service:
+        condition: service_started
+    ports:
+      - "5003:5003"
+
+  gateway:
+    build:
+      context: ./server/gateway
+      dockerfile: Dockerfile
+    container_name: movie-review-gateway
+    environment:
+      PORT: 3000
+      USER_SERVICE_ADDR: user-service:5001
+      MOVIE_SERVICE_ADDR: movie-service:5002
+      REVIEW_SERVICE_ADDR: review-service:5003
+    depends_on:
+      - user-service
+      - movie-service
+      - review-service
+    ports:
+      - "3000:3000"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: movie-review-client
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000/api
+    depends_on:
+      - gateway
+    ports:
+      - "5173:5173"
+
+volumes:
+  db-data:

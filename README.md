@@ -24,6 +24,7 @@ A full-stack movie review application built with a **microservices architecture*
 - **Client** — React SPA that handles the UI, routing, and authentication via Supabase.
 - **API Gateway** — Express server that exposes RESTful endpoints and proxies requests to the appropriate gRPC microservice.
 - **Microservices** — Three independent gRPC services handling users, movies, and reviews respectively.
+- **MySQL** — Persistent storage for users, movies, and reviews used by backend microservices.
 - **Supabase** — Provides PostgreSQL database hosting with Row-Level Security (RLS) and user authentication.
 
 ---
@@ -55,11 +56,12 @@ A full-stack movie review application built with a **microservices architecture*
 
 ### Database & Auth
 
-| Technology                | Purpose                              |
-| ------------------------- | ------------------------------------ |
-| **Supabase (PostgreSQL)** | Cloud-hosted relational database     |
-| **Row-Level Security**    | Fine-grained access control policies |
-| **Supabase Auth**         | User authentication                  |
+| Technology                | Purpose                               |
+| ------------------------- | ------------------------------------- |
+| **MySQL 8**               | Backend microservice data persistence |
+| **Supabase (PostgreSQL)** | Cloud-hosted relational database      |
+| **Row-Level Security**    | Fine-grained access control policies  |
+| **Supabase Auth**         | User authentication                   |
 
 ---
 
@@ -203,6 +205,53 @@ npm run dev
 ```
 
 Once all services are running, open **http://localhost:5173** in your browser.
+
+---
+
+## 🐳 Run With Docker
+
+You can run the full stack (client + gateway + all gRPC services) with Docker Compose.
+
+### 1. Prepare Environment Variables
+
+At the project root, create a `.env` file from `.env.example` and fill in your Supabase values:
+
+```bash
+cp .env.example .env
+# Windows (Command Prompt)
+copy .env.example .env
+```
+
+Required variables:
+
+```env
+MYSQL_ROOT_PASSWORD=1234
+MYSQL_DATABASE=movie_review_db
+MYSQL_USER=movie_app
+MYSQL_PASSWORD=movie_app_password
+MYSQL_PORT=3306
+
+VITE_API_BASE_URL=http://localhost:3000/api
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 2. Build and Start Containers
+
+```bash
+docker compose up --build
+```
+
+### 3. Access the App
+
+- Frontend: `http://localhost:5173`
+- API Gateway: `http://localhost:3000`
+
+### 4. Stop Containers
+
+```bash
+docker compose down
+```
 
 ---
 

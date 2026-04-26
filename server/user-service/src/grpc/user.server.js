@@ -1,6 +1,7 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
 const path = require("path");
+const { pool, waitForDatabase, ensureSchema } = require("../db");
 
 // Load proto file
 const PROTO_PATH = path.join(__dirname, "../../../proto/user.proto");
@@ -15,14 +16,17 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 
 const userProto = grpc.loadPackageDefinition(packageDefinition).user;
 
-// ===== Fake Database (Replace with real DB later) =====
-let users = [];
-let currentId = 1;
+const toUserResponse = (row) => ({
+  id: row.id,
+  name: row.name,
+  email: row.email,
+  created_at: new Date(row.created_at).toISOString(),
+});
 
 // ===== gRPC Methods =====
 
 // Create User
-const createUser = (call, callback) => {
+const createUser = async (call, callback) => {
   const { name, email, password } = call.request;
 
   if (!name || !email || !password) {
@@ -32,68 +36,85 @@ const createUser = (call, callback) => {
     });
   }
 
-  const existingUser = users.find((u) => u.email === email);
-  if (existingUser) {
-    return callback({
-      code: grpc.status.ALREADY_EXISTS,
-      message: "Email already exists",
+  try {
+    const [existingRows] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email],
+    );
+
+    if (existingRows.length > 0) {
+      return callback({
+        code: grpc.status.ALREADY_EXISTS,
+        message: "Email already exists",
+      });
+    }
+
+    const [result] = await pool.query(
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      [name, email, password],
+    );
+
+    const [rows] = await pool.query(
+      "SELECT id, name, email, created_at FROM users WHERE id = ?",
+      [result.insertId],
+    );
+
+    callback(null, toUserResponse(rows[0]));
+  } catch (error) {
+    callback({
+      code: grpc.status.INTERNAL,
+      message: "Failed to create user",
     });
   }
-
-  const newUser = {
-    id: currentId++,
-    name,
-    email,
-    password, // ⚠️ In production: hash it
-    created_at: new Date().toISOString(),
-  };
-
-  users.push(newUser);
-
-  callback(null, {
-    id: newUser.id,
-    name: newUser.name,
-    email: newUser.email,
-    created_at: newUser.created_at,
-  });
 };
 
 // Get User by ID
-const getUser = (call, callback) => {
+const getUser = async (call, callback) => {
   const { id } = call.request;
 
-  const user = users.find((u) => u.id === id);
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, email, created_at FROM users WHERE id = ?",
+      [id],
+    );
 
-  if (!user) {
-    return callback({
-      code: grpc.status.NOT_FOUND,
-      message: "User not found",
+    if (rows.length === 0) {
+      return callback({
+        code: grpc.status.NOT_FOUND,
+        message: "User not found",
+      });
+    }
+
+    callback(null, toUserResponse(rows[0]));
+  } catch (error) {
+    callback({
+      code: grpc.status.INTERNAL,
+      message: "Failed to fetch user",
     });
   }
-
-  callback(null, {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    created_at: user.created_at,
-  });
 };
 
 // List Users
-const listUsers = (call, callback) => {
-  const formattedUsers = users.map((user) => ({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    created_at: user.created_at,
-  }));
-
-  callback(null, { users: formattedUsers });
+const listUsers = async (call, callback) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, email, created_at FROM users ORDER BY id ASC",
+    );
+    callback(null, { users: rows.map(toUserResponse) });
+  } catch (error) {
+    callback({
+      code: grpc.status.INTERNAL,
+      message: "Failed to list users",
+    });
+  }
 };
 
 // ===== Server Setup =====
 
-const startServer = () => {
+const startServer = async () => {
+  await waitForDatabase();
+  await ensureSchema();
+
   const server = new grpc.Server();
 
   server.addService(userProto.UserService.service, {
@@ -102,10 +123,10 @@ const startServer = () => {
     ListUsers: listUsers,
   });
 
-  const PORT = "0.0.0.0:5001";
+  const PORT = process.env.PORT || 5001;
 
   server.bindAsync(
-    PORT,
+    `0.0.0.0:${PORT}`,
     grpc.ServerCredentials.createInsecure(),
     (err, port) => {
       if (err) {
@@ -114,7 +135,7 @@ const startServer = () => {
       }
       console.log(`🚀 User Service running on port ${port}`);
       server.start();
-    }
+    },
   );
 };
 
