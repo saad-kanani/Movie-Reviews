@@ -1,12 +1,22 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
+const fs = require("fs");
 const path = require("path");
 const { pool, waitForDatabase, ensureSchema } = require("../db");
 
 // ===== Load Review Proto =====
-const REVIEW_PROTO_PATH = path.join(__dirname, "../../../proto/review.proto");
-const USER_PROTO_PATH = path.join(__dirname, "../../../proto/user.proto");
-const MOVIE_PROTO_PATH = path.join(__dirname, "../../../proto/movie.proto");
+const REVIEW_PROTO_PATH = [
+  path.join(__dirname, "../../proto/review.proto"),
+  path.join(__dirname, "../../../proto/review.proto"),
+].find((candidate) => fs.existsSync(candidate));
+const USER_PROTO_PATH = [
+  path.join(__dirname, "../../proto/user.proto"),
+  path.join(__dirname, "../../../proto/user.proto"),
+].find((candidate) => fs.existsSync(candidate));
+const MOVIE_PROTO_PATH = [
+  path.join(__dirname, "../../proto/movie.proto"),
+  path.join(__dirname, "../../../proto/movie.proto"),
+].find((candidate) => fs.existsSync(candidate));
 
 const reviewPackageDef = protoLoader.loadSync(REVIEW_PROTO_PATH, {
   keepCase: true,

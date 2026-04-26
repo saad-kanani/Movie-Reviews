@@ -38,7 +38,7 @@ const ensureSchema = async () => {
       title VARCHAR(255) NOT NULL,
       description TEXT NOT NULL,
       release_year INT NOT NULL,
-      image TEXT DEFAULT '',
+      image TEXT,
       type VARCHAR(255) DEFAULT '',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;

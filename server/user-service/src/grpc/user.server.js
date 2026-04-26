@@ -1,10 +1,14 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
+const fs = require("fs");
 const path = require("path");
 const { pool, waitForDatabase, ensureSchema } = require("../db");
 
 // Load proto file
-const PROTO_PATH = path.join(__dirname, "../../../proto/user.proto");
+const PROTO_PATH = [
+  path.join(__dirname, "../../proto/user.proto"),
+  path.join(__dirname, "../../../proto/user.proto"),
+].find((candidate) => fs.existsSync(candidate));
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -136,7 +140,6 @@ const startServer = async () => {
   await ensureSchema();
 
   const server = new grpc.Server();
-
 
   server.addService(userProto.UserService.service, {
     CreateUser: createUser,

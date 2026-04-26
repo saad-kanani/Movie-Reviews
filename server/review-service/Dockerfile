@@ -2,11 +2,12 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY server/review-service/package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY server/review-service/ ./
+COPY server/proto ./proto
 
 EXPOSE 5003
 

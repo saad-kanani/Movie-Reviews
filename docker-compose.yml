@@ -6,7 +6,7 @@ services:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: movie_review_db
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "3307:3306"
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
@@ -16,8 +16,8 @@ services:
       retries: 10
   user-service:
     build:
-      context: ./server/user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/user-service/Dockerfile
     container_name: movie-review-user-service
     environment:
       PORT: 5001
@@ -34,8 +34,8 @@ services:
 
   movie-service:
     build:
-      context: ./server/movie-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/movie-service/Dockerfile
     container_name: movie-review-movie-service
     environment:
       PORT: 5002
@@ -52,8 +52,8 @@ services:
 
   review-service:
     build:
-      context: ./server/review-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/review-service/Dockerfile
     container_name: movie-review-review-service
     environment:
       PORT: 5003
@@ -76,8 +76,8 @@ services:
 
   gateway:
     build:
-      context: ./server/gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/gateway/Dockerfile
     container_name: movie-review-gateway
     environment:
       PORT: 3000
